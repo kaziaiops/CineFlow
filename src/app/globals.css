@@ -1,0 +1,219 @@
+@import "tailwindcss";
+
+/* CineFlow design system — "dark navy + neon blue". Always-dark by design
+   (local production tool, no light mode). Every token below is a fixed
+   spec value, not a Tailwind default — see design notes in PR history for
+   the source spec. */
+:root {
+  --bg: #0b0e13;
+  --surface: #12161f;
+  --surface-hover: #171c28;
+
+  --border: rgba(255, 255, 255, 0.06);
+  --border-hover: rgba(0, 212, 255, 0.4);
+
+  --accent: #00d4ff; /* primary neon blue — buttons, active states, links, focus */
+  --accent-secondary: #6366f1; /* electric indigo — numbered badges, secondary highlights */
+
+  --text-primary: #e8eaed;
+  --text-secondary: #8b93a7;
+  --text-tertiary: #5b6478;
+
+  /* Status semantics — meaningful across the whole pipeline UI. */
+  --status-pending: #a8a29e;
+  --status-pending-bg: rgba(168, 162, 158, 0.15);
+  --status-pending-border: rgba(168, 162, 158, 0.3);
+
+  --status-running: #00d4ff;
+  --status-running-bg: rgba(0, 212, 255, 0.13);
+  --status-running-border: rgba(0, 212, 255, 0.3);
+
+  --status-done: #10d9a0;
+  --status-done-bg: rgba(16, 217, 160, 0.13);
+  --status-done-border: rgba(16, 217, 160, 0.3);
+
+  --status-failed: #ff4d6d;
+  --status-failed-bg: rgba(255, 77, 109, 0.13);
+  --status-failed-border: rgba(255, 77, 109, 0.3);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-border: var(--border);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-accent: var(--accent);
+  --color-accent-secondary: var(--accent-secondary);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-geist-mono);
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background:
+    radial-gradient(ellipse 70% 45% at 50% -10%, rgba(0, 212, 255, 0.07), transparent),
+    radial-gradient(ellipse 60% 40% at 100% 0%, rgba(99, 102, 241, 0.05), transparent),
+    var(--bg);
+  color: var(--text-secondary);
+  font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+}
+
+.font-display {
+  font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
+}
+
+::selection {
+  background: rgba(0, 212, 255, 0.2);
+  color: var(--text-primary);
+}
+
+@layer components {
+  .eyebrow {
+    color: rgba(0, 212, 255, 0.7);
+    @apply text-[11px] font-semibold uppercase tracking-[0.08em];
+  }
+
+  .card {
+    background: linear-gradient(135deg, var(--surface) 0%, #0e1219 100%);
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 8px 24px rgba(0, 0, 0, 0.3);
+    @apply rounded-[14px];
+  }
+
+  .input {
+    background: #0e1219;
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    @apply rounded-lg px-3.5 py-2.5 text-sm outline-none transition-colors duration-150;
+  }
+  .input::placeholder {
+    color: var(--text-tertiary);
+  }
+  .input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.15);
+  }
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger,
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg text-sm font-medium
+           transition-all duration-150 disabled:opacity-40 disabled:pointer-events-none;
+  }
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger {
+    @apply px-4 py-2.5;
+  }
+  .btn-ghost {
+    @apply px-2.5 py-1.5;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #00d4ff, #00a8cc);
+    color: #04141a;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 20px -4px rgba(0, 212, 255, 0.45);
+  }
+  .btn-primary:hover {
+    background: linear-gradient(135deg, #33ddff, #00bfe0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 24px -4px rgba(0, 212, 255, 0.6);
+  }
+  .btn-secondary {
+    background: var(--surface-hover);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+  }
+  .btn-secondary:hover {
+    background: #1d2330;
+    border-color: var(--border-hover);
+  }
+  .btn-danger {
+    background: var(--status-failed-bg);
+    border: 1px solid var(--status-failed-border);
+    color: var(--status-failed);
+  }
+  .btn-danger:hover {
+    background: rgba(255, 77, 109, 0.2);
+  }
+  .btn-ghost {
+    color: var(--text-tertiary);
+  }
+  .btn-ghost:hover {
+    color: var(--status-failed);
+    background: var(--status-failed-bg);
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium;
+  }
+
+  .list-card {
+    background: linear-gradient(135deg, var(--surface) 0%, #0e1219 100%);
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 8px 24px rgba(0, 0, 0, 0.3);
+    @apply rounded-[14px] transition-all duration-200 ease-out;
+  }
+  .list-card:hover {
+    border-color: var(--border-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 8px 24px rgba(0, 0, 0, 0.3),
+      0 0 24px rgba(0, 212, 255, 0.08);
+  }
+
+  /* Signature control-panel index badge — the one recurring visual anchor
+     (project cards, shot cards, shot detail) across the whole app. */
+  .index-badge {
+    background: linear-gradient(135deg, var(--accent-secondary), var(--accent));
+    box-shadow: 0 0 12px rgba(0, 212, 255, 0.3);
+    color: #ffffff;
+    @apply flex shrink-0 items-center justify-center rounded-full text-xs font-bold transition-transform duration-200 ease-out;
+  }
+  .list-card:hover .index-badge {
+    transform: scale(1.08);
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+  }
+
+  .meta-text {
+    color: var(--text-tertiary);
+    font-variant-numeric: tabular-nums;
+    @apply text-[13px] font-medium;
+  }
+}
+
+/* Ordered-entrance animation: each row fades/slides in slightly after the
+   previous one (delay set per-item via inline style) so a shot list reads
+   as a sequence, not a static dump. */
+@keyframes fade-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.stagger-in {
+  animation: fade-slide-in 400ms ease-out both;
+}
+
+/* Status-pill pulse for the "running" state. */
+@keyframes status-pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.status-pulse {
+  animation: status-pulse 1.5s ease-in-out infinite;
+}

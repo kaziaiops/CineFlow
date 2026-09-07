@@ -1,0 +1,101 @@
+// CineFlow / Blindside Effect production pipeline
+// Local-first SQLite database. All timestamps stored as ISO strings via Prisma DateTime.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// One video = one Project. Holds the full script and pipeline-level settings.
+model Project {
+  id          String   @id @default(cuid())
+  title       String
+  script      String   @default("") // Full pasted script, source of truth for shots
+  status      String   @default("draft") // draft | in_progress | done | archived
+  notes       String   @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  shots       Shot[]
+}
+
+// One line/beat of the script = one Shot. Ordered sequentially by `index`.
+model Shot {
+  id             String   @id @default(cuid())
+  projectId      String
+  index          Int      // 0-based position within the project
+  scriptText     String   // The raw script line/beat this shot represents
+  kind           String   @default("unset") // unset | static | animated
+  sceneNumber    Int      @default(1) // For multi-scene shots (split beats)
+  durationMs     Int      @default(4000) // Intended duration in ms
+  posePrompt     String   @default("") // The variable "Only change:" line for this shot
+  imagePrompt    String   @default("") // Fully assembled positive image prompt (template + pose)
+  imageNegativePrompt String @default("") // Standing negative block + any excluded props
+  motionPromptPos String  @default("") // Wan 2.2 motion prompt positive
+  motionPromptNeg String  @default("") // Wan 2.2 motion prompt negative
+  promptInputs   String   @default("{}") // JSON: the granular step-3 creative fields (expression, pose, props, motion, ...)
+  caption        String   @default("") // Step-7 text overlay; defaults to scriptText when blank
+  capcutDraftId  String   @default("") // Last CapCut draft id built for this shot, if any
+  notes          String   @default("")
+  status         String   @default("pending") // pending | image_ready | video_ready | upscaled | done
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  project        Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  takes          Take[]
+  runs           PipelineRun[]
+
+  @@unique([projectId, index])
+  @@index([projectId])
+}
+
+// A single generation attempt for a Shot. One Take per Shot is marked SELECTED.
+// Kinds: "image" (from Google Flow), "video" (ComfyUI I2V), "upscale" (ComfyUI upscale).
+model Take {
+  id          String   @id @default(cuid())
+  shotId      String
+  kind        String   // image | video | upscale
+  filePath    String   // Path relative to storage root, e.g. "projects/{pid}/shots/{sid}/takes/{tid}.png"
+  mimeType    String   @default("")
+  rating      Int?     // 1-10, nullable
+  approved    Boolean  @default(false) // rating >= 9 typically
+  selected    Boolean  @default(false) // The chosen take for this kind on this shot
+  sourceMeta  String   @default("") // JSON blob: seed, workflow name, prompt snapshot, etc.
+  notes       String   @default("")
+  createdAt   DateTime @default(now())
+
+  shot        Shot     @relation(fields: [shotId], references: [id], onDelete: Cascade)
+
+  @@index([shotId])
+  @@index([shotId, kind])
+}
+
+// One execution of a pipeline script against a Shot (voiceover, prompts,
+// image_ingest, i2v, upscale, capcut_draft). Tracks status for the UI so a
+// shot's page can show "running" / "done" / "failed" per step.
+model PipelineRun {
+  id         String    @id @default(cuid())
+  shotId     String
+  step       String    // voiceover | prompts | image_ingest | i2v | upscale | capcut_draft
+  status     String    @default("queued") // queued | running | done | failed
+  log        String    @default("") // captured stdout+stderr
+  error      String    @default("")
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+
+  shot       Shot      @relation(fields: [shotId], references: [id], onDelete: Cascade)
+
+  @@index([shotId])
+}
+
+// Global app settings — one row, upserted by key. Used for the paths and
+// endpoints you configure (CapCut draft folder, ComfyUI URL, VectCutAPI URL, etc.).
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
